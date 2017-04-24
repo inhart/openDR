@@ -12,13 +12,6 @@ from threading import Thread
 import cv2
 import numpy as np
 import io
-import ftplib
-from ftplib import FTP
-import os
-# initilise FTP object
-ftp  = FTP()
-
-
 
 ###############################################################################
 ### This class provides access to the picamera and its associated functions ###
@@ -45,13 +38,11 @@ class Fundus_Cam(object):
         # This is a list to store images captured 
         # in Fundus_Cam.continuous_capture() 
         self.images=[]
-        #self.camera.start_preview((612,384))
         self.camera.start_preview()
 
         # used to stop and start recording in versions higher than1.0
         self.stopped = False
 
-        
     def continuous_capture(self):
         # starts a new thread, which runs the update()
         self.stopped = False
@@ -75,9 +66,9 @@ class Fundus_Cam(object):
                     return
                 
     
-    # to flip the current state  
+    # to flip the camera 
     def flip_cam(self):
-        self.camera.vflip=(not self.camera.vflip)
+        self.camera.vflip=(not self.flip_state)
 
     #to capture a single image
     def capture(self):
@@ -100,45 +91,8 @@ class Fundus_Cam(object):
 
     # used in version higher than 1.0
     def stop(self):
-        self.camera.close()
         self.stopped=True
 
-    #get the corresponding ftp folder, if it does not exist create it
-    def get_ftp_folder(self,source):
-        try:
-            ftp.cwd(source)
-            print ftp.pwd()
-        except ftplib.error_perm:
-            ftp.mkd(source)
-            ftp.cwd(source)
-            print 'created a new folder', source
-
-    # to copy files from the given location
-    def copyfiles(self,source):
-        #change working directory of local
-        os.chdir(source)
-        #change/create working directory of ftp server
-        self.get_ftp_folder(source)
-        for root, dirs, filenames in os.walk(source):
-            for f in filenames:
-                print 'Copying ',f
-                #ftp.cwd()
-                ftp.storbinary('STOR %s' % f,open(f,'rb'))
-        return
-    
-    # to start copying files
-    def copy_files(self,HOST,PORT,source):
-        print 'HOST:',HOST
-        print 'PORT:',PORT
-        print 'source:',source
-        # get connection to the specified HOST and PORT 
-        ftp.connect(HOST,PORT)
-        print 'connected to ',HOST
-        ftp.login()
-        # copy files from the MR number folder
-        self.copyfiles(source)
-        
-        return 'Copy complete.'
 
         
 ## decode function
