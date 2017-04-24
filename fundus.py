@@ -1,14 +1,14 @@
 ##############################################################################
-##  OWL v2.9					                        		##############
+##  OWL v2.9                                                    ##############
 ## ------------------------------------------------------------ ##############
 ##  Authors: Ayush Yadav, Devesh Jain, Ebin Philip, Dhruv Joshi ##############
-##  Srujana Center for Innovation, LV Prasad Eye Institute	    ##############
-##  								                            ##############
-##  This code will wait for an external button press, capture	##############
-##  two images in rapid succession with two different white  	############## 
-##  LEDs, process them to remove glare computationally, send	##############
-##  them to the theia algo backend to be processed, save them	##############
-##  and return the score on-screen in human readable format.	##############
+##  Srujana Center for Innovation, LV Prasad Eye Institute      ##############
+##                                                              ##############
+##  This code will wait for an external button press, capture   ##############
+##  two images in rapid succession with two different white     ############## 
+##  LEDs, process them to remove glare computationally, send    ##############
+##  them to the theia algo backend to be processed, save them   ##############
+##  and return the score on-screen in human readable format.    ##############
 ##                                                              ##############
 ##                                                              ##############
 ##  New in 2.6 :  Path corrected and Onscreen keyboard added    ##############
@@ -28,6 +28,7 @@ from flask import Response
 from Fundus_Cam import Fundus_Cam
 import cv2
 import numpy as np
+import datetime
 
 # Import the modules needed for image processing and ML grading
 import sys
@@ -38,10 +39,23 @@ import process      # our processing module
 from process import grade
 # since the folder locations are fixed, hard-coding filesystem locations
 base_folder = '/home/pi/openDR'
+source = base_folder+'/images/'
 
 #a dynamic grading key
 grade_val = 'Grade'
+orangeyellow = 14
+bluegreen  = 15
+switch = 4
+i=1 # initial_counter
+text = ''
 
+   # pi is initialized as the pigpio object
+pi=pigpio.pi()
+pi.set_mode(orangeyellow,pigpio.OUTPUT)
+pi.set_mode(bluegreen,pigpio.OUTPUT)
+pi.set_mode(switch,pigpio.INPUT)
+#set a pull-up resistor on the switch pin
+pi.set_pull_up_down(switch,pigpio.PUD_UP) 
 last_img =  '1'
 try:
 
@@ -51,13 +65,37 @@ try:
     app = Flask(__name__)
     
     #tokens would have the value for each but
-    tokens=['Flip' , 'Vid' , 'Click' , 'Switch' , grade_val , 'Shut' ]
+    tokens=['Flip' , 'Vid' , 'Click' , 'Switch' , grade_val ,'Copy',  'Shut' ]
 
     #URL setter
     @app.route( '/' )
     def my_form():
-    	normalON()
         return render_template( "index.html" )
+
+    #Ip address and port number input is accepted here
+    @app.route('/my_form_copy', methods = ['POST'])
+    def my_form_copy():
+        source = ''
+        global processed_text
+        #input for IP and PORT Number into 'HOST' and 'PORT' variable
+        print 'FTP addr'
+        HOST = request.form['ipaddr']
+        PORT = int(request.form['port'])
+
+        #converting input text to upper case for final MR number
+        d = datetime.datetime.now()        
+        processed_text = str(d.year)+'/'+str(d.month)+'/'+str(d.day)+'/'+text.upper()
+        #print 'source ',source
+        print 'processed_text', processed_text
+        source = base_folder+'/images/' + processed_text
+        print 'source ',source
+        print 'HOST', HOST
+        print 'PORT', PORT, processed_text
+        
+       
+        obj_fc.copy_files(HOST,PORT,source)
+        #return redirect(url_for('captureSimpleFunc'))
+        return redirect(url_for('my_form'))
 
     #MR number input is accepted here
     @app.route('/', methods = ['POST'])
@@ -66,20 +104,23 @@ try:
         global processed_text
         global obj_state
         global last_img
-  
+        # global variable is used to get the MR number while copy
+        global text 
         obj_state = True
-
+        normalON()
         #input for MR Number into 'text' variable
         text = request.form['text']
         
         #converting input text to upper case for final MR number
         processed_text = text.upper()
+        d = datetime.datetime.now()
+        processed_text = str(d.year)+'/'+str(d.month)+'/'+str(d.day)+'/'+text.upper()
+        source =  base_folder+'/images/' + processed_text
         make_a_dir(processed_text)
         
         #declaring object Fundus_cam
         global obj_fc
         obj_fc = Fundus_Cam()
-
         return redirect(url_for('captureSimpleFunc'))
 
 
@@ -130,8 +171,14 @@ try:
                         obj_fc.stop_preview()
                         obj_fc.stop()
                         return redirect(url_for('my_form'))
-                        
-                    return render_template('capture_simple.html', params=tokens, grades={})
+                    
+                #if copy button pressed
+                if d == 'Copy':
+                    if obj_state == True:
+                        obj_fc.stop_preview()
+                        obj_fc.stop()
+                        return render_template('ip_address.html')
+                    
                 if d == 'Shut':
                     shut_down()
                     return render_template('capture_simple.html', params=tokens, grades={})
@@ -162,10 +209,13 @@ try:
             file_w = open(base_folder + '/name','w')
             file_w.write(str(picn))
             file_w.close()
+            global text
+            up_text = text.upper()
+            print 'save: ',base_folder+ "/images/" + up_text 
             last_img = (base_folder + "/images/" 
                                    + processed_text 
                                    + '/' 
-                                   + processed_text 
+                                   + up_text 
                                    +'_' + str(picn) 
                                    + '_' + str(no) 
                                    + '.jpg')
@@ -178,10 +228,11 @@ try:
                     cv2.imwrite( last_img, image )
                     no=no+1
             else:
+                print 'going to save....',last_img
                 image=cv2.imdecode(images,1)
                 #image=get_fundus(image)
                 cv2.imwrite( last_img,image )  
-		no=no+1
+            no=no+1
     #-------------------Flask implementation ends here--------------------#
 
     #--------------NO MAN'S LAND. ABANDON ALL HOPE YE WHO ENTER-----------#
@@ -191,10 +242,12 @@ try:
 
     #make a directory of patient's name if it does not exist
     def make_a_dir(pr_t):
+        print pr_t
         d = base_folder + "/images/"+pr_t
+        print d
         if not os.path.exists(d):
             print os.path.dirname(__file__)
-            os.mkdir(d)
+            os.makedirs(d,0755)
         
         
     # Set the pins
@@ -204,7 +257,7 @@ try:
     orangeyellow = 14
     bluegreen  = 15
     switch = 4
-    i=1	# initial_counter
+    i=1 # initial_counter
 
     # pi is initialized as the pigpio object
     pi=pigpio.pi()
@@ -215,6 +268,8 @@ try:
     pi.set_pull_up_down(switch,pigpio.PUD_UP)
     # Defining functions for putting off each LED
     def normalON():
+        global orangeyellow
+        global bluegreen
         # orangeyellow is ON and the other is OFF
         pi.write(orangeyellow,0)
         pi.write(bluegreen,1)
@@ -244,5 +299,6 @@ def shut_down():
         print output    
     
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', threaded = True)
 
+    app.run(host='0.0.0.0')
+ 
