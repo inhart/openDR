@@ -1,5 +1,5 @@
 ## Open Indirect Opthalmoscope (OIO)
-_Authors: Ayush Yadav, Ebin Philip, Dhruv Joshi_
+Based on the previous work of Ayush Yadav, Ebin Philip, Dhruv Joshi
 
 _Acknowledgements: Tristan Swedish, Devesh Jain_
 
