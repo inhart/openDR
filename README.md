@@ -65,3 +65,7 @@ openDR
 `Fundus_cam.py` stores the class which allows for the creation of object controlling the Picamera. 
 
 `simplehttp.sh` creates a python simplehttp server on port 8000 to allow for transfer of files from the device.
+
+Copy images: Added a unit for FTP transfer from the device to an FTP server. FTP Address and Port number can be entered dynamically.
+
+WiFi Connection : At startup displays all available WiFis and user can connect to any. The currently connected network is also displayed.
