@@ -1,8 +1,8 @@
 ##############################################################################
-#########################  Fundus_Cam.py             #########################
-#########################  Primary Author: Ebin      #########################
-#########################  Version : 1.0             #########################
-#########################  Contributor: Ayush Yadav  #########################
+#########################  Fundus_Cam.py                              ########
+#########################  Primary Author: Ebin                       ########
+#########################  Version : 1.0                              ########
+#########################  Contributor: Preetha Warrier, Ayush Yadav  ########
 ##############################################################################
 
 
@@ -51,6 +51,9 @@ class Fundus_Cam(object):
         # used to stop and start recording in versions higher than1.0
         self.stopped = False
 
+
+
+    
         
     def continuous_capture(self):
         # starts a new thread, which runs the update()

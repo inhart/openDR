@@ -29,12 +29,48 @@
 		$(function(){
 			$('#keyboard').keyboard();
 		});
+		$(function(){
+			$('#keyboard2').keyboard();
+		});
 	</script>
 
 
+<style type="text/css" >
 
+input#button_r{
+	color:black;
+	background:url("/static/image/refresh.jpg");
+	background-repeat:no-repeat;
+	width: 20px;
+	height:20px;
+	border:0;
+}
+input#button_s{
+	color:black;
+	background:url("/static/image/power.jpg");
+	background-repeat:no-repeat;
+	width: 50px;
+	height:28px;
+	border:0;
+}
+#drop_down_{
+	color: black;
+}
+#wifi_box_{
+	border: grey solid thin;
+        padding:5px 5px 5px 5px;
+}
+
+</style>
 <!--
 <style type="text/css" >
+.button1_{
+	color: green;
+	border-style: solid;
+	border-radius: 3px;
+	margin-bottom: 20px;
+	width: 40px;
+}
 #head_name{
 	position: relative;
 	padding-top: 20px;
@@ -80,7 +116,7 @@
 </head>
 
 <body>
-	<div id="container_1">
+    <div id="container_1">
     <h1 class="all" id="head_name">OWL </h1>
     <h2 class="all" id="head_instru">Enter MR number</h2>
     <form class="all" action="." method="POST">
@@ -91,10 +127,31 @@
         <div id="wrap"> <!-- wrapper only needed to center the input -->
 
 		<!-- keyboard input -->
-		<input id="keyboard" type="text" name="text"><br><br>
-		<input class="all" id="button_" type="submit" name="my-form" value="Send">
+        	<input id="keyboard" type="text" name="text"><br><br>
+                <div id="wifi_box_">
+		You are connected to :{{wifi_conn}}
+		</br></br>
+		Available WiFis:
+		</br>
+		<select name ="wifi_name" id = "drop_down_" width = "300px">
+		{% for o in wifi_avail %}
+		    <option name="{{o}}" value="{{o}}">{{o}}</option>
+		{% endfor %}
+		</select> 
+		<input type = 'submit' id="button_r"  alt="Refresh" name = "my-form" value = ''/>
+		</br></br>
+		Password
+		<input id="keyboard2" style="width:150px" type="password" name="password"/><br><br>
+		<!--input id="keyboard" type="text" name="wifi_name"/><br><br-->
+		</div> <!-- End wifi_box -->
+		<br><br>
+		<input class="all" id="button_" type="submit" name="my-form" value="Send"/>
+
+
 	</div> <!-- End wrapper -->
-        
+        <div align = "right">
+        <input type = 'submit' id="button_s"  alt="ShutDown" name = "my-form" value = 'S'/>
+	</div>
     </form>
     </div>
 </body>
